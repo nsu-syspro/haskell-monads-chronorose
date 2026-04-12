@@ -13,9 +13,9 @@ permissions:
   contents: read
 
 env:
-  # Corresponds to lts-21.25
-  #   https://www.stackage.org/lts-21.25
-  GHC_VERSION: 9.4.8
+  # Corresponds to lts-23.28
+  #   https://www.stackage.org/lts-23.28
+  GHC_VERSION: 9.8.4
 
 jobs:
   run-autograding-tests:
