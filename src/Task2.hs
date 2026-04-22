@@ -1,48 +1,56 @@
 {-# OPTIONS_GHC -Wall #-}
+
 -- The above pragma enables all warnings
 
 module Task2 where
 
 -- Hide built-in bind definition
-import Prelude hiding ((>>=))
 
 import Data.Functor.Identity
+import Prelude hiding ((>>=))
 
 -- * Kleisli composition monad
 
 -- | Monad based on Kleisli composition '(>=>)' operator
 -- instead of usual bind operator '(>>=)'.
-class Applicative m => KleisliMonad m where
+class (Applicative m) => KleisliMonad m where
   infixr 1 >=>
   (>=>) :: (a -> m b) -> (b -> m c) -> (a -> m c)
 
 -- * Equivalent views
 
 infixl 1 >>=
-(>>=) :: KleisliMonad m => m a -> (a -> m b) -> m b
-(>>=) = error "TODO: define (>>=) in Task2"
 
-join :: KleisliMonad m => m (m a) -> m a
-join = error "TODO: define join in Task2"
+(>>=) :: (KleisliMonad m) => m a -> (a -> m b) -> m b
+(>>=) ma f = (id >=> f) ma
+
+join :: (KleisliMonad m) => m (m a) -> m a
+join = id >=> id
 
 -- * Instances
 
 instance KleisliMonad Identity where
   (>=>) :: (a -> Identity b) -> (b -> Identity c) -> (a -> Identity c)
-  (>=>) = error "TODO: define (>=>) (KleisliMonad Identity)"
+  (>=>) fa fb = fb . runIdentity . fa
 
 instance KleisliMonad Maybe where
   (>=>) :: (a -> Maybe b) -> (b -> Maybe c) -> (a -> Maybe c)
-  (>=>) = error "TODO: define (>=>) (KleisliMonad Maybe)"
+  (>=>) fa fb = \a ->
+    let ra = fa a
+        rb Nothing = Nothing
+        rb (Just x) = fb x
+     in rb ra
 
 instance KleisliMonad [] where
   (>=>) :: (a -> [b]) -> (b -> [c]) -> (a -> [c])
-  (>=>) = error "TODO: define (>=>) (KleisliMonad [])"
+  (>=>) fa fb = concatMap fb . fa
 
 instance (Monoid e) => KleisliMonad ((,) e) where
-  (>=>) :: Monoid e => (a -> (e, b)) -> (b -> (e, c)) -> (a -> (e, c))
-  (>=>) = error "TODO: define (>=>) (KleisliMonad ((,) e))"
+  (>=>) :: (Monoid e) => (a -> (e, b)) -> (b -> (e, c)) -> (a -> (e, c))
+  (>=>) fa fb = \x -> case fa x of
+    (e1, b) -> case fb b of
+      (e2, c) -> (e1 <> e2, c)
 
 instance KleisliMonad ((->) e) where
   (>=>) :: (a -> e -> b) -> (b -> e -> c) -> (a -> e -> c)
-  (>=>) = error "TODO: define (>=>) (KleisliMonad ((->) e))"
+  (>=>) fa fb = \a -> \e -> fb (fa a e) e
