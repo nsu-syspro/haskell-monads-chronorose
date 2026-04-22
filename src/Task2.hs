@@ -35,7 +35,11 @@ instance KleisliMonad Identity where
 
 instance KleisliMonad Maybe where
   (>=>) :: (a -> Maybe b) -> (b -> Maybe c) -> (a -> Maybe c)
-  (>=>) fa fb = \a -> join (fb <$> fa a) -- i already defined join in terms of kleisli composition so this is fine, right?
+  (>=>) fa fb = \a ->
+    let ra = fa a
+        rb Nothing = Nothing
+        rb (Just x) = fb x
+     in rb ra
 
 instance KleisliMonad [] where
   (>=>) :: (a -> [b]) -> (b -> [c]) -> (a -> [c])
